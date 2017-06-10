@@ -21,11 +21,10 @@ class NetCDFReader {
 
         // Check the NetCDF format
         const version = buffer.readByte();
-        utils.notNetcdf((version === 2), '64-bit offset format not supported yet');
-        utils.notNetcdf((version !== 1), 'unknown version');
+        utils.notNetcdf((version > 2), 'unknown version');
 
         // Read the header
-        this.header = readHeader(buffer);
+        this.header = readHeader(buffer, version);
         this.header.version = version;
         this.buffer = buffer;
     }

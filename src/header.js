@@ -19,7 +19,7 @@ const NC_ATTRIBUTE = 12;
  *  * `globalAttributes`: List of global attributes
  *  * `variables`: List of variables
  */
-function header(buffer) {
+function header(buffer, version) {
     // Length of record dimension
     // sum of the varSize's of all the record variables.
     var header = {recordDimension: {length: buffer.readUint32()}};
@@ -34,7 +34,7 @@ function header(buffer) {
     header.globalAttributes = attributesList(buffer);
 
     // List of variables
-    var variables = variablesList(buffer, dimList.recordId);
+    var variables = variablesList(buffer, dimList.recordId, version);
     header.variables = variables.variables;
     header.recordDimension.recordStep = variables.recordStep;
 
@@ -144,7 +144,7 @@ function attributesList(buffer) {
  *  * `offset`: Number with the offset where of the variable begins
  *  * `record`: True if is a record variable, false otherwise
  */
-function variablesList(buffer, recordId) {
+function variablesList(buffer, recordId, version) {
     const varList = buffer.readUint32();
     var recordStep = 0;
     if (varList === ZERO) {
@@ -183,7 +183,11 @@ function variablesList(buffer, recordId) {
 
             // Read offset
             // TODO change it for supporting 64-bit
-            const offset = buffer.readUint32();
+            var offset = buffer.readUint32();
+            if(version === 2) {
+                utils.notNetcdf((offset != 0), 'offsets larger than 4GB not supported');                
+                offset = buffer.readUint32();
+            }
 
             // Count amount of record variables
             if (dimensionsIds[0] === recordId) {
